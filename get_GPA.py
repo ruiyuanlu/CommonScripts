@@ -7,26 +7,30 @@
 # The library used to draw charts is pyecharts.
 
 # input file path
-file_path = r"C:\score.txt"
+file_path = r"C:\Users\luruiyuan\Desktop\score.txt"
 
 class Term:
     
     # grade_section 左闭右开, 如, 71 分gpa为2.0, 72分则为2.3
-    # 西交 GPA 算法
+    # 西交 4.3 GPA 算法
     grade_section = [0, 60, 64, 68, 72, 75, 78, 81, 85, 90, 95, 101]
     gpa_section =   [0, 1.3, 1.7, 2, 2.3, 2.7, 3, 3.3, 3.7, 4, 4.3]
 
-    # 人大 GPA 算法
-    grade_section = [0, 60, 63, 66, 70, 73, 76, 80, 83, 86, 90, 101]
-    gpa_section =   [0, 1, 1.3, 1.7, 2, 2.3, 2.7, 3, 3.3, 3.7, 4]
+    # # 人大 4.0 GPA 算法
+    # grade_section = [0, 60, 63, 66, 70, 73, 76, 80, 83, 86, 90, 101]
+    # gpa_section =   [0, 1, 1.3, 1.7, 2, 2.3, 2.7, 3, 3.3, 3.7, 4]
 
-    # 网上国外基于 4.0 GPA 的算法
-    grade_section = [0, 65, 67, 70, 73, 77, 80, 83, 87, 90, 93, 101]
-    gpa_section =   [0, 1, 1.3, 1.7, 2, 2.3, 2.7, 3, 3.3, 3.7, 4]
+    # # 网上国外基于 4.0 GPA 的算法
+    # grade_section = [0, 65, 67, 70, 73, 77, 80, 83, 87, 90, 93, 101]
+    # gpa_section =   [0, 1, 1.3, 1.7, 2, 2.3, 2.7, 3, 3.3, 3.7, 4]
 
-    # 北大 4.0 GPA 的算法
-    grade_section = [0, 60, 64, 68, 72, 75, 79, 83, 86, 90, 101]
-    gpa_section =   [0, 1, 1.5, 2, 2.3, 2.7, 3, 3.3, 3.7, 4]
+    # # 北大 4.0 GPA 的算法
+    # grade_section = [0, 60, 64, 68, 72, 75, 79, 83, 86, 90, 101]
+    # gpa_section =   [0, 1, 1.5, 2, 2.3, 2.7, 3, 3.3, 3.7, 4]
+
+    # # 传说中的 WES 算法, 不知道对不对
+    # grade_section = [0, 60, 70, 80, 90, 101]
+    # gpa_section =   [0, 1, 2, 3, 4]
 
     def __init__(self, term):
         self.term = term

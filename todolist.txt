@@ -1,5 +1,0 @@
-a todo list for these complementary scripts
-
-haven't finished:
-git_push_to_new_repository.py (no test yet)
-execute_cmd.py(no cuncurrency yet)
