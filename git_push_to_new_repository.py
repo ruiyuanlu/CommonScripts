@@ -37,7 +37,9 @@ def path_split(raw_path):
     1. Relative: ("relative", "", "../test", "test.py")
     2. Absolute: ("absolute", "d:", "d:\\test", "test.py")
     """
-    dir, base = os.path.split(raw_path)
+    if not os.path.exists(raw_path):
+        raise ValueError("The input path: '{p}' doesn't exists!".format(p=raw_path))
+    dir, base = os.path.split(raw_path) if os.path.isfile(raw_path) else (raw_path, '')
     type = "absolute" if os.path.isabs(raw_path) else "relative"
     return type, dir, base
 
@@ -52,19 +54,18 @@ def set_work_dir(input_path):
         os.chdir(dir)
     print("current work path: %s" % os.getcwd())
     
-def git_first_push():
+def git_first_push(work_dir):
 
     txt = """
     before you use this scripts, please make sure you have created
     a repository on gitHub.
 
     !!! Note: This operation will initialize your git repository in current folder,
-        Do you make sure this is a new repository and you wan to push to git?
-
+        Do you make sure this is a new repository and you wan to push to git?\n
     """
     status, in_str = shc.make_choice(txt, default="y")
     if status is True and in_str in 'Yy':
-        set_work_dir(__file__)
+        set_work_dir(work_dir)
         cmds = []
         cmds.append("git init")
         # check info validation and generate commands
@@ -94,4 +95,11 @@ def git_first_push():
         executer.execute(cmds)
 
 if __name__ == '__main__':
-    git_first_push()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--path', metavar='Path',
+        help='the path(s) of target directory that should be pushed to gitHub')
+    args = parser.parse_args()
+    work_dir = args.path if args.path else __file__
+    print("work_dir: ", work_dir)
+    git_first_push(work_dir)

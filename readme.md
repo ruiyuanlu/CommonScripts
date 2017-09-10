@@ -6,7 +6,8 @@ empty
 
 | files                         | updated items                        | comments                                 |
 | ----------------------------- | ------------------------------------ | ---------------------------------------- |
-| git_push_to_new_repository.py | add cmd support to transfer path arg | git_push_to_new_repository.py now can support command line arguments as path |
+| git_push_to_new_repository.py | add cmd support to transfer path arg | git_push_to_new_repository.py now can support command line arguments as --path |
+| git_push_to_new_repository.py | bug fix                              |                                          |
 
 ## file(s):
 
