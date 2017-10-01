@@ -14,14 +14,9 @@ DEFAULT_FMT      = '[%(levelname)s] [%(asctime)s] %(filename)s [line:%(lineno)d]
 DEFAULT_DATE_FMT = '%Y-%m-%d %a, %p %H:%M:%S'
 DEFAULT_LEVEL    = 'DEBUG'
 
-def get_logger(loggername='', cmdlog=True, filelog=True, filename='myApp.log', filemode='a',colorful=True,
-                cmd_color_dict=None,
-                cmdlevel='DEBUG',
-                cmdfmt=DEFAULT_FMT,
-                cmddatefmt=DEFAULT_DATE_FMT,
-                filelevel='INFO',
-                filefmt=DEFAULT_FMT,
-                filedatefmt=DEFAULT_DATE_FMT,
+def get_logger(loggername='', cmdlog=True, filelog=True, filename='myApp.log', filemode='a', colorful=True,
+                cmd_color_dict=None, cmdlevel='DEBUG', cmdfmt=DEFAULT_FMT, cmddatefmt=DEFAULT_DATE_FMT,
+                filelevel='INFO', filefmt=DEFAULT_FMT, filedatefmt=DEFAULT_DATE_FMT,
                 backup_count=0, limit=10240, when=None):
 
     return Logger.get_logger(**locals())
