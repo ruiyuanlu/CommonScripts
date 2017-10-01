@@ -1,6 +1,6 @@
-Get more detailed info at
+Get more detailed info at 
 
-[my blog]: http://www.cnblogs.com/luruiyuan/p/7600931.html	"Alu's blog"
+my blog:  <url>http://www.cnblogs.com/luruiyuan/p/7600931.html<url>
 
 # haven't finished:
 
