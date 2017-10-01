@@ -8,6 +8,7 @@ empty
 | ----------------------------- | ------------------------------------ | ---------------------------------------- |
 | git_push_to_new_repository.py | add cmd support to transfer path arg | git_push_to_new_repository.py now can support command line arguments as --path |
 | git_push_to_new_repository.py | bug fix                              |                                          |
+| logger.py                     | new colorful logger                  |                                          |
 
 ## file(s):
 
@@ -30,6 +31,28 @@ empty
   - local_name  : used to commit when you are working at local device
   - repo_name : used to set remote repository on the github.com
   - commit : used to explain what you've done in order to help others understand your work
+
+- logger.py: a colorful logger file
+
+  ```python
+  ''' 
+  simple examples for logger.py
+  '''
+  import logger
+  log1 = logger.getLogger(loggername='test')
+  log2 = logger.getLogger(loggername='test', filename='myApp.log', colorful=True)
+  log2.info('Info test')
+  log2.debug('debug message')
+  log2.error('Error occured!')
+  log2.exception('This is an exception')
+  log.debug(log1 is log2)
+
+  # set attibutes
+  log.set_logger(backup_count=10)
+  log.set_logger(loggername='new_test_logger')
+  ```
+
+  ​
 
 # Finished
 
