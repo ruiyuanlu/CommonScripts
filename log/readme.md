@@ -1,3 +1,7 @@
+Get more detailed info at
+
+[my blog]: http://www.cnblogs.com/luruiyuan/p/7600931.html	"Alu's blog"
+
 # haven't finished:
 
 logger: httpHandler, socketHandler
