@@ -12,35 +12,39 @@ CONFIG_FILE=/etc/shadowsocks.json
 SERVICE_FILE=/etc/systemd/system/shadowsocks.service
 SS_PASSWORD=$(random-string 32)
 SS_PORT=10001
-SS_METHOD="aes-256-cfb"
+SS_TIMEOUT=600
+SS_METHOD=aes-256-cfb
 SS_IP=`ip route get 1 | awk '{print $NF;exit}'`
 GET_PIP_FILE=/tmp/get-pip.py
 WAITING_SEC=5 # waiting seconds
 
-# install pip
+echo "install pip..."
 curl "https://bootstrap.pypa.io/get-pip.py" -o "${GET_PIP_FILE}"
 python ${GET_PIP_FILE}
-
-# install shadowsocks
 pip install --upgrade pip
+
+echo "install shadowsocks..."
 pip install shadowsocks
 pip install --upgrade shadowsocks
 
 # create shadowsocls config file
 # if multi-user are neccessary, add different <port, password> pair in "port_password"
 # Note: each port can be used only once.
+# Note: "port_password" must have a comma, and the last <port, password> pair should not be
+#   followed by a comma
 cat <<EOF | sudo tee ${CONFIG_FILE}
 {
   "server": "0.0.0.0",
   "port_password": {
-      ${SS_PORT}: "${SS_PASSWORD}"
-  }
-  "timeout": 600,
-  "method": ${SS_METHOD}
+      "${SS_PORT}": "${SS_PASSWORD}"
+  },
+  "timeout": ${SS_TIMEOUT},
+  "method": "${SS_METHOD}"
 }
 EOF
 
 # create service
+echo "write service file..."
 cat <<EOF | sudo tee ${SERVICE_FILE}
 [Unit]
 Description=Shadowsocks
@@ -54,23 +58,21 @@ WantedBy=multi-user.target
 EOF
 
 # reload firewall, if multi-user is neccessary, add more ss_port
-echo "reload firewall..."
+echo "set firewall port..."
 firewall-cmd --reload
-sleep ${WAITING_SEC}
 firewall-cmd --zone=public --add-port=${SS_PORT}/tcp --permanent
 firewall-cmd --zone=public --add-port=${SS_PORT}/udp --permanent
 firewall-cmd --reload
 sleep ${WAITING_SEC}
-echo "reload done"
 
 # start service
+echo "start shadowsocks service..."
 systemctl enable shadowsocks
 systemctl start shadowsocks
 
-# view service status
 echo "waiting shadowsocks starting for ${WAITING_SEC} sec..."
 sleep ${WAITING_SEC}
-
+# view service status
 echo "================================"
 echo ""
 echo "Congratulations! Shadowsocks has been installed on your system."
