@@ -165,16 +165,23 @@ class Logger():
     __name2logger = {}
 
     @classmethod
+    def _acquire_lock(cls):
+        cls.__lock.acquire()
+    
+    @classmethod
+    def _release_lock(cls):
+        cls.__lock.release()
+
+    @classmethod
     def get_logger(cls, **kwargs):
         loggername = kwargs['loggername']
-        cls.__lock.acquire()    # lock current thread
-        if loggername in cls.__name2logger:
-            cls.__name2logger[loggername].set_logger(**kwargs)
-        else:
-            log_obj = object.__new__(cls)
-            cls.__init__(log_obj, **kwargs)
-            cls.__name2logger[loggername] = log_obj
-        cls.__lock.release()    # release lock
+        if loggername not in cls.__name2logger:
+            cls._acquire_lock()    # lock current thread
+            if loggername not in cls.__name2logger:
+                log_obj = object.__new__(cls)
+                cls.__init__(log_obj, **kwargs)
+                cls.__name2logger[loggername] = log_obj
+            cls._release_lock()    # release lock
         return cls.__name2logger[loggername]
 
     def set_logger(self, **kwargs):
