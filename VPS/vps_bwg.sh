@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -
 # Install SS on CentOS 7
 
 echo "Installing Shadowsocks..."
