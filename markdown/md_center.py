@@ -9,9 +9,12 @@ def _center_title(line):
     line: each titile in markwon file.
     """
     if line.startswith('#'):
-        front, behind = re.split('(?: )+', line.strip()) # (?: )+ 用空格分隔, (?...) 非捕获分组，即空格不出现再结果中
-        if behind.find('<center>') == -1:
-            return "%s <center>%s</center>\n" % (front, behind)
+        match_obj = re.match('#+ ', line) #  (?...) 非捕获分组，即空格不出现再结果中, match 只从字符串中匹配第一组结果
+        if match_obj is not None:
+            sep = len(match_obj.group())
+            front, behind = line[:sep], line[sep:]
+            if behind.find('<center>') == -1:
+                return "%s <center>%s</center>" % (front, behind)
     return line
 
 def _center_img(line):
@@ -36,4 +39,4 @@ def centerize(file, encoding='utf-8', center_func=_center_title):
         f.write("".join(lines))
 
 centerize('test.md',center_func=_center_img) # centerize img labels
-centerize('test.md') # centerize titles
+centerize('就医情况说明.md') # centerize titles
