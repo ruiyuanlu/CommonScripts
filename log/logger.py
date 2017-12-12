@@ -269,6 +269,7 @@ class Logger():
 
         formatter = BasicFormatter(self.filefmt, self.filedatefmt)
         self.filehandler.setFormatter(formatter)
+        self.filehandler.setLevel(self.filelevel)
         self.logger.addHandler(self.filehandler)
 
     def __add_streamhandler(self):
