@@ -23,7 +23,7 @@ def get_logger(loggername='', cmdlog=True, filelog=True, filename='myApp.log', f
     args = locals()
     from os import name
     if name == 'nt':
-        args.colorful = False
+        args["colorful"] = False
     return Logger.get_logger(**args)
 
 
