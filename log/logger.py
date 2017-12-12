@@ -10,7 +10,7 @@ from logging import Formatter
 import threading
 import os
 
-DEFAULT_FMT      = '[%(levelname)s] [%(asctime)s] %(filename)s [line:%(lineno)d] %(message)s'
+DEFAULT_FMT      = '[%(levelname)s] [%(asctime)s] %(filename)s [line:%(lineno)d]: %(message)s'
 DEFAULT_DATE_FMT = '%Y-%m-%d %a, %p %H:%M:%S'
 DEFAULT_LEVEL    = 'DEBUG'
 
