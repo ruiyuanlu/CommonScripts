@@ -8,9 +8,10 @@ logger: httpHandler, socketHandler
 
 # updated:
 
-| files     | updated items      | comments              |
-| --------- | ------------------ | --------------------- |
-| logger.py | a log related code | add a colorful logger |
+| files     | updated items                            | comments              |
+| --------- | ---------------------------------------- | --------------------- |
+| logger.py | a log related code                       | add a colorful logger |
+| logger.py | forbidden color settings if in Win platform |                       |
 
 ## Parameters:
 

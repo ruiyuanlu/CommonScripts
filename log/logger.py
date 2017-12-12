@@ -18,8 +18,13 @@ def get_logger(loggername='', cmdlog=True, filelog=True, filename='myApp.log', f
                 cmd_color_dict=None, cmdlevel='DEBUG', cmdfmt=DEFAULT_FMT, cmddatefmt=DEFAULT_DATE_FMT,
                 filelevel='INFO', filefmt=DEFAULT_FMT, filedatefmt=DEFAULT_DATE_FMT,
                 backup_count=0, limit=10240, when=None):
-
-    return Logger.get_logger(**locals())
+    
+    # if Win platform, forbidden colorful settings
+    args = locals()
+    from os import name
+    if name == 'nt':
+        args.colorful = False
+    return Logger.get_logger(**args)
 
 
 class CmdColor():
