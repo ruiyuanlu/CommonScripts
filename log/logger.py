@@ -8,23 +8,18 @@ __all__ = ['get_logger', 'set_logger', 'debug', 'info', 'warning', 'error', 'cri
 import logging
 from logging import Formatter
 import threading
-
+import os
 
 DEFAULT_FMT      = '[%(levelname)s] [%(asctime)s] %(filename)s [line:%(lineno)d] %(message)s'
 DEFAULT_DATE_FMT = '%Y-%m-%d %a, %p %H:%M:%S'
 DEFAULT_LEVEL    = 'DEBUG'
 
-def get_logger(loggername='', cmdlog=True, filelog=True, filename='myApp.log', filemode='a', colorful=True,
+def get_logger(loggername='', cmdlog=True, filelog=True, filename='./log/app.log', filemode='a', colorful=True,
                 cmd_color_dict=None, cmdlevel='DEBUG', cmdfmt=DEFAULT_FMT, cmddatefmt=DEFAULT_DATE_FMT,
                 filelevel='INFO', filefmt=DEFAULT_FMT, filedatefmt=DEFAULT_DATE_FMT,
                 backup_count=0, limit=10240, when=None):
-    
-    # if Win platform, forbidden colorful settings
-    args = locals()
-    from os import name
-    if name == 'nt':
-        args["colorful"] = False
-    return Logger.get_logger(**args)
+
+    return Logger.get_logger(**locals())
 
 
 class CmdColor():
@@ -195,13 +190,9 @@ class Logger():
             if k not in Logger.__log_arg_set:
                 raise KeyError("config argument '%s' does not exist" % k)
             setattr(self, k, v) # add instance attributes
-
-        if self.cmd_color_dict is None:
-            self.cmd_color_dict = {'debug': 'green', 'warning':'yellow', 'error':'red', 'critical':'purple'}
-        if isinstance(self.cmdlevel, str):
-            self.cmdlevel = getattr(logging, self.cmdlevel.upper(), logging.DEBUG)
-        if isinstance(self.filelevel, str):
-            self.filelevel = getattr(logging, self.filelevel.upper(), logging.INFO)
+        
+        # preprocess args
+        self.__arg_preprocessor()
 
         self.__init_logger()
         self.__import_log_func()
@@ -209,6 +200,18 @@ class Logger():
             self.__add_streamhandler()
         if self.filelog:
             self.__add_filehandler()
+
+    def __arg_preprocessor(self):
+        # platform detection. If Win platform, forbidden colorful settings
+        if os.name == 'nt':
+            self.colorful = False
+
+        if self.cmd_color_dict is None:
+            self.cmd_color_dict = {'debug': 'green', 'warning':'yellow', 'error':'red', 'critical':'purple'}
+        if isinstance(self.cmdlevel, str):
+            self.cmdlevel = getattr(logging, self.cmdlevel.upper(), logging.DEBUG)
+        if isinstance(self.filelevel, str):
+            self.filelevel = getattr(logging, self.filelevel.upper(), logging.INFO)
 
     def __init__(self, **kwargs):
         self.logger = None
@@ -235,8 +238,23 @@ class Logger():
             f = getattr(self.logger, fn)
             setattr(self, fn, f)
 
+    def __path_preprocess(self):
+        # calculate path according to the location of logger.py
+        par_path, file_name = os.path.split(self.filename)
+        cur_par, _ = os.path.split(__file__)
+        dir_path = os.path.join(cur_par, par_path)
+        path = os.path.join(dir_path, file_name)
+        if not os.path.exists(dir_path): # create dir if neccessary
+            os.makedirs(dir_path)
+        if not os.path.exists(path):     # create file if neccessary
+            open(path, self.filemode).close()
+        self.filename = os.path.abspath(path)
+
     def __add_filehandler(self):
         ''' Add a file handler to logger '''
+        # path preprocess
+        self.__path_preprocess()
+
         # Filehandler
         if self.backup_count == 0:
             self.filehandler = logging.FileHandler(self.filename, self.filemode)
@@ -265,7 +283,7 @@ class Logger():
 
 if __name__ == '__main__':
     print("logger测试")
-    log = get_logger(colorful=True)
+    log = get_logger(colorful=True, filename=r'../parent1./parent2\test.log')
     # log.set_logger(colorful=False)
     log.debug('原谅绿')
     log.info('info白')
