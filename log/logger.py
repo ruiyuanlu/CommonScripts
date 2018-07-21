@@ -1,6 +1,7 @@
 # coding=utf-8
 # aurthor: luruiyaun
-# date: 2017-9-27
+# v1 date: 2017-9-27
+# v2 date: 2018-7-19
 # file: logger.py
 
 __all__ = ['get_logger', 'set_logger', 'debug', 'info', 'warning', 'error', 'critical']
@@ -9,6 +10,9 @@ import logging
 from logging import Formatter
 import threading
 import os
+
+import abc
+import six
 
 DEFAULT_FMT      = '[%(levelname)s] [%(asctime)s] %(filename)s [line:%(lineno)d]: %(message)s'
 DEFAULT_DATE_FMT = '%Y-%m-%d %a, %p %H:%M:%S'
@@ -22,30 +26,131 @@ def get_logger(loggername='', cmdlog=True, filelog=True, filename='./log/app.log
     return Logger.get_logger(**locals())
 
 
-class CmdColor():
-    ''' Cmd color escape strings '''
-    # color escape strings
-    __COLOR_RED    = '\033[1;31m'
-    __COLOR_GREEN  = '\033[1;32m'
-    __COLOR_YELLOW = '\033[1;33m'
-    __COLOR_BLUE   = '\033[1;34m'
-    __COLOR_PURPLE = '\033[1;35m'
-    __COLOR_CYAN   = '\033[1;36m'
-    __COLOR_GRAY   = '\033[1;37m'
-    __COLOR_WHITE  = '\033[1;38m'
-    __COLOR_RESET  = '\033[1;0m'
+@six.add_metaclass(abc.ABCMeta)
+class Color():
+    '''The abstract base class of all color classes'''
+
+    @abc.abstractclassmethod
+    def get_color_by_str(cls):
+        '''get all the color names'''
+        pass
+    
+    @abc.abstractclassmethod
+    def get_all_colors(cls, color_str):
+        '''return color of given color_str'''
+        pass
+    
+    @abc.abstractclassmethod
+    def get_color_set(cls):
+        ''' return a set contains the name of all the colors'''
+        pass
+
+
+class WindowsCmdColor(Color):
+    '''Windows Cmd color support'''
+
+    STD_OUTPUT_HANDLE = -11
+    
+    '''Windows CMD命令行 前景字体颜色'''
+    FOREGROUND_BLACK = 0x00 # black.
+    FOREGROUND_DARKBLUE = 0x01 # dark blue.
+    FOREGROUND_DARKGREEN = 0x02 # dark green.
+    FOREGROUND_DARKSKYBLUE = 0x03 # dark skyblue.
+    FOREGROUND_DARKRED = 0x04 # dark red.
+    FOREGROUND_DARKPINK = 0x05 # dark pink.
+    FOREGROUND_DARKYELLOW = 0x06 # dark yellow.
+    FOREGROUND_DARKWHITE = 0x07 # dark white.
+    FOREGROUND_DARKGRAY = 0x08 # dark gray.
+    FOREGROUND_BLUE = 0x09 # blue.
+    FOREGROUND_GREEN = 0x0a # green.
+    FOREGROUND_SKYBLUE = 0x0b # skyblue.
+    FOREGROUND_RED = 0x0c # red.
+    FOREGROUND_PINK = 0x0d # pink.
+    FOREGROUND_YELLOW = 0x0e # yellow.
+    FOREGROUND_WHITE = FOREGROUND_RESET = 0x0f # white and reset
+
+    '''# Windows CMD命令行 背景颜色'''
+    BACKGROUND_DARKBLUE = 0x10 # dark blue.
+    BACKGROUND_GREEN = 0x20 # dark green.
+    BACKGROUND_DARKSKYBLUE = 0x30 # dark skyblue.
+    BACKGROUND_DARKRED = 0x40 # dark red.
+    BACKGROUND_DARKPINK = 0x50 # dark pink.
+    BACKGROUND_DARKYELLOW = 0x60 # dark yellow.
+    BACKGROUND_DARKWHITE = 0x70 # dark white.
+    BACKGROUND_DARKGRAY = 0x80 # dark gray.
+    BACKGROUND_BLUE = 0x90 # blue.
+    BACKGROUND_GREEN = 0xa0 # green.
+    BACKGROUND_SKYBLUE = 0xb0 # skyblue.
+    BACKGROUND_RED = 0xc0 # red.
+    BACKGROUND_PINK = 0xd0 # pink.
+    BACKGROUND_YELLOW = 0xe0 # yellow.
+    BACKGROUND_WHITE = 0xf0 # white.
 
     # color names to escape strings
     __COLOR_2_STR = {
-        'red'   : __COLOR_RED,
-        'green' : __COLOR_GREEN,
-        'yellow': __COLOR_YELLOW,
-        'blue'  : __COLOR_BLUE,
-        'purple': __COLOR_PURPLE,
-        'cyan'  : __COLOR_CYAN,
-        'gray'  : __COLOR_GRAY,
-        'white' : __COLOR_WHITE,
-        'reset' : __COLOR_RESET,
+        'red'   : FOREGROUND_RED,
+        'green' : FOREGROUND_GREEN,
+        'yellow': FOREGROUND_YELLOW,
+        'blue'  : FOREGROUND_BLUE,
+        'pink'  : FOREGROUND_PINK,
+        'black' : FOREGROUND_BLACK,
+        'gray'  : FOREGROUND_DARKGRAY,
+        'white' : FOREGROUND_WHITE,
+        'reset' : FOREGROUND_RESET,
+    }
+    
+    __COLORS = __COLOR_2_STR.keys()
+    __COLOR_SET = set(__COLORS)
+
+    import ctypes
+    __cmd_output_handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE) # get std output handle
+    __cmd_color_setter = ctypes.windll.kernel32.SetConsoleTextAttribute # set color by handle
+
+    @classmethod
+    def windows_cmd_color_wrapper(cls, log_func, color):
+        def wrapper(*args, **kw):
+            cls.__cmd_color_setter(cls.__cmd_output_handle, cls.get_color_by_str(color))
+            res = log_func(*args, **kw)
+            cls.__cmd_color_setter(cls.__cmd_output_handle, cls.get_color_by_str('reset'))
+            return res
+
+        return wrapper
+
+    @classmethod
+    def get_color_by_str(cls, color_str):
+        '''return color of given color_str'''
+        if not isinstance(color_str, str):
+            raise TypeError("color string must str, but type: '%s' passed in." % type(color_str))
+        color = color_str.lower()
+        if color not in cls.__COLOR_SET:
+            raise ValueError("no such color: '%s'" % color)
+        return cls.__COLOR_2_STR[color]
+
+    @classmethod
+    def get_all_colors(cls):
+        ''' return a list that contains all the color names '''
+        return cls.__COLORS
+
+    @classmethod
+    def get_color_set(cls):
+        ''' return a set contains the name of all the colors'''
+        return cls.__COLOR_SET
+
+
+class LinuxCmdColor(Color):
+    '''Linux Cmd color support'''
+
+    # color names to escape strings
+    __COLOR_2_STR = {
+        'red'   : '\033[1;31m',
+        'green' : '\033[1;32m',
+        'yellow': '\033[1;33m',
+        'blue'  : '\033[1;34m',
+        'pink': '\033[1;35m',
+        'cyan'  : '\033[1;36m',
+        'gray'  : '\033[1;37m',
+        'white' : '\033[1;38m',
+        'reset' : '\033[1;0m',
     }
 
     __COLORS = __COLOR_2_STR.keys()
@@ -53,6 +158,7 @@ class CmdColor():
 
     @classmethod
     def get_color_by_str(cls, color_str):
+        '''return color of given color_str'''
         if not isinstance(color_str, str):
             raise TypeError("color string must str, but type: '%s' passed in." % type(color_str))
         color = color_str.lower()
@@ -82,7 +188,7 @@ class BasicFormatter(Formatter):
             default case: microseconds is added
             otherwise: add microseconds mannually'''
         asctime = Formatter.formatTime(self, record, datefmt=datefmt)
-        return asctime if datefmt is None or datefmt == '' else self.default_msec_format % (asctime, record.msecs)
+        return self.default_msec_format % (asctime, record.msecs) if datefmt else asctime
 
     def format(self, record):
         ''' @override logging.Formatter.format
@@ -127,7 +233,11 @@ class CmdColoredFormatter(BasicFormatter):
         super(CmdColoredFormatter, self).__init__(fmt, datefmt)
         self.LOG_COLORS = {}     # a dict, used to convert log level to color
         self.init_log_colors()
+        self.log_color_func = lambda:'%s' if os.name == 'nt' else \
+                                lambda color : ''.join([LinuxCmdColor.get_color_by_str(color),\
+                                    '%s', LinuxCmdColor.get_color_by_str('reset')])
         self.set_level_colors(**level_colors)
+
 
     def init_log_colors(self):
         ''' initialize log config '''
@@ -137,7 +247,7 @@ class CmdColoredFormatter(BasicFormatter):
     def set_level_colors(self, **kwargs):
         ''' set each level different colors '''
         lev_set = CmdColoredFormatter.__LEVEL_SET
-        color_set = CmdColor.get_color_set()
+        color_set = WindowsCmdColor.get_color_set() if os.name == 'nt' else LinuxCmdColor.get_color_set()
 
         # check log level and set colors
         for lev, color in kwargs.items():
@@ -146,14 +256,13 @@ class CmdColoredFormatter(BasicFormatter):
                 raise KeyError("log level '%s' does not exist" % lev)
             if color not in color_set:
                 raise ValueError("log color '%s' does not exist" % color)
-            self.LOG_COLORS[lev] = ''.join([CmdColor.get_color_by_str(color), '%s', CmdColor.get_color_by_str('reset')])
+            self.LOG_COLORS[lev] = self.log_color_func()
 
     def format(self, record):
         ''' @override BasicFormatter.format'''
         msg = super(CmdColoredFormatter, self).format(record)
         # msg = BasicFormatter.format(self, record)     # 本行和上一行等价
         return self.LOG_COLORS.get(record.levelname, '%s') % msg
-
 
 class Logger():
     ''' My logger '''
@@ -203,11 +312,11 @@ class Logger():
 
     def __arg_preprocessor(self):
         # platform detection. If Win platform, forbidden colorful settings
-        if os.name == 'nt':
-            self.colorful = False
+        # if os.name == 'nt':
+        #     self.colorful = False
 
-        if self.cmd_color_dict is None:
-            self.cmd_color_dict = {'debug': 'green', 'warning':'yellow', 'error':'red', 'critical':'purple'}
+        if not self.cmd_color_dict:
+            self.cmd_color_dict = {'debug': 'green', 'warning':'yellow', 'error':'red', 'critical':'pink'}
         if isinstance(self.cmdlevel, str):
             self.cmdlevel = getattr(logging, self.cmdlevel.upper(), logging.DEBUG)
         if isinstance(self.filelevel, str):
@@ -221,7 +330,7 @@ class Logger():
 
     def __init_logger(self):
         ''' Init logger or reload logger '''
-        if self.logger is None:
+        if not self.logger:
             self.logger = logging.getLogger(self.loggername)
         else:
             logging.shutdown()
@@ -236,6 +345,8 @@ class Logger():
         func_names = ['debug', 'info', 'warning', 'error', 'critical', 'exception']
         for fn in func_names:
             f = getattr(self.logger, fn)
+            if os.name == 'nt' and self.colorful and fn in self.cmd_color_dict:
+                f = WindowsCmdColor.windows_cmd_color_wrapper(f, self.cmd_color_dict[fn])
             setattr(self, fn, f)
 
     def __path_preprocess(self):
@@ -259,7 +370,7 @@ class Logger():
         if self.backup_count == 0:
             self.filehandler = logging.FileHandler(self.filename, self.filemode)
         # RotatingFileHandler
-        elif self.when is None:
+        elif not self.when:
             self.filehandler = logging.handlers.RotatingFileHandler(self.filename,
                                     self.filemode, self.limit, self.backup_count)
         # TimedRotatingFileHandler
@@ -285,7 +396,7 @@ class Logger():
 if __name__ == '__main__':
     print("logger测试")
     log = get_logger(colorful=True, filename=r'../parent1./parent2\test.log')
-    # log.set_logger(colorful=False)
+    # log.set_logger(colorful=True)
     log.debug('原谅绿')
     log.info('info白')
     log.warning("提高log等级到warning, loggername为'log'")
@@ -293,9 +404,12 @@ if __name__ == '__main__':
     log.info('不存在的一句话')
     log.warning("我怎么黄了!!!")
     log.error("我的天哪")
-    log.critical("红得发紫!!!!!!!")
+    log.set_logger(colorful=False)
+    log.critical("没有颜色的红得发紫!!!!!!!")
     log.warning("修改log等级为debug")
     log.set_logger(cmdlevel='debug')
+    log.set_logger(colorful=True)
+    log.critical("红得发紫!!!!!!!")
     log.debug("修改debug颜色配置为灰色")
     log.set_logger(cmd_color_dict={'debug':'gray'})
     log.debug('修改完成')
