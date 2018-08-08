@@ -2,6 +2,7 @@
 # aurthor: luruiyaun
 # v1 date: 2017-9-27
 # v2 date: 2018-7-19
+# v3 date: 2018-8-8
 # file: logger.py
 
 __all__ = ['get_logger', 'set_logger', 'debug', 'info', 'warning', 'error', 'critical']
@@ -21,7 +22,7 @@ DEFAULT_LEVEL    = 'DEBUG'
 def get_logger(loggername='', cmdlog=True, filelog=True, filename='./log/app.log', filemode='a', colorful=True,
                 cmd_color_dict=None, cmdlevel='DEBUG', cmdfmt=DEFAULT_FMT, cmddatefmt=DEFAULT_DATE_FMT,
                 filelevel='INFO', filefmt=DEFAULT_FMT, filedatefmt=DEFAULT_DATE_FMT,
-                backup_count=0, limit=10240, when=None):
+                propagate=False, backup_count=0, limit=10240, when=None):
 
     return Logger.get_logger(**locals())
 
@@ -268,7 +269,7 @@ class Logger():
     ''' My logger '''
     # log related arguments
     __LOG_ARGS = ['cmdlog', 'cmd_color_dict', 'filelog', 'filename', 'filemode', 'colorful', 'cmdlevel','loggername',
-                'cmdfmt', 'cmddatefmt', 'filelevel', 'filefmt', 'filedatefmt', 'backup_count', 'limit', 'when']
+                'cmdfmt', 'cmddatefmt', 'filelevel', 'filefmt', 'filedatefmt', 'backup_count', 'limit', 'when', 'propagate']
     __log_arg_set = set(__LOG_ARGS)
     __lock = threading.Lock()
     __name2logger = {}
@@ -311,10 +312,6 @@ class Logger():
             self.__add_filehandler()
 
     def __arg_preprocessor(self):
-        # platform detection. If Win platform, forbidden colorful settings
-        # if os.name == 'nt':
-        #     self.colorful = False
-
         if not self.cmd_color_dict:
             self.cmd_color_dict = {'debug': 'green', 'warning':'yellow', 'error':'red', 'critical':'pink'}
         if isinstance(self.cmdlevel, str):
@@ -345,6 +342,7 @@ class Logger():
         func_names = ['debug', 'info', 'warning', 'error', 'critical', 'exception']
         for fn in func_names:
             f = getattr(self.logger, fn)
+            # Windows cmd color support
             if os.name == 'nt' and self.colorful and fn in self.cmd_color_dict:
                 f = WindowsCmdColor.windows_cmd_color_wrapper(f, self.cmd_color_dict[fn])
             setattr(self, fn, f)
@@ -396,7 +394,7 @@ class Logger():
 if __name__ == '__main__':
     print("logger测试")
     log = get_logger(colorful=True, filename=r'../parent1./parent2\test.log')
-    # log.set_logger(colorful=True)
+    log.set_logger(propagate=True)
     log.debug('原谅绿')
     log.info('info白')
     log.warning("提高log等级到warning, loggername为'log'")
@@ -427,4 +425,7 @@ if __name__ == '__main__':
     print("不同名时非单例测试")
     log3 = get_logger(loggername='test_logger3')
     log3.debug("呵呵大3")
-    log3.warning("相等性检测, log 应出现两条，因为Root和log3都会打印一次: log is log3: %s | log2 is log3 %s" % (log is log3, log2 is log3))
+    # 测试propagate
+    log3.debug('propagate 属性为 %r 时' % log3.propagate)
+    log3.set_logger(propagate=True)
+    log3.error('propagate 属性为 %r 时' % log3.propagate)
