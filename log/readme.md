@@ -4,7 +4,7 @@ my blog:  <url>http://www.cnblogs.com/luruiyuan/p/7600931.html<url>
 
 # haven't finished:
 
-logger: httpHandler, socketHandler
+logger: httpHandler, socketHandler, Windows support still has bugs.
 
 # updated:
 
@@ -13,6 +13,7 @@ logger: httpHandler, socketHandler
 | logger.py | a log related code                       | Add a colorful logger                    |
 | logger.py | forbidden color settings if in Win platform |                                          |
 | logger.py | add relative path support                | Add relative/absolute path as prefix of filename, and the logger will save log files into that directory automatically (Create new dir and files if neccessary) **Note: the relative path calculation is based on the locatoin of logger.py!!!** |
+|logger.py|Posix support bug fixed|
 
 ## Parameters:
 
