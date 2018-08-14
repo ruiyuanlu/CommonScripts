@@ -1,8 +1,9 @@
 # coding=utf-8
 # aurthor: luruiyaun
-# v1 date: 2017-9-27
-# v2 date: 2018-7-19
-# v3 date: 2018-8-8
+# v0.1 date: 2017-9-27
+# v0.2 date: 2018-7-19
+# v0.3 date: 2018-8-8
+# v0.4 date: 2018-8-14
 # file: logger.py
 
 __all__ = ['get_logger', 'set_logger', 'debug', 'info', 'warning', 'error', 'critical']
@@ -103,9 +104,10 @@ class WindowsCmdColor(Color):
     __COLORS = __COLOR_2_STR.keys()
     __COLOR_SET = set(__COLORS)
 
-    import ctypes
-    __cmd_output_handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE) # get std output handle
-    __cmd_color_setter = ctypes.windll.kernel32.SetConsoleTextAttribute # set color by handle
+    if os.name == 'nt':
+        import ctypes
+        __cmd_output_handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE) # get std output handle
+        __cmd_color_setter = ctypes.windll.kernel32.SetConsoleTextAttribute # set color by handle
 
     @classmethod
     def windows_cmd_color_wrapper(cls, log_func, color):
@@ -234,11 +236,7 @@ class CmdColoredFormatter(BasicFormatter):
         super(CmdColoredFormatter, self).__init__(fmt, datefmt)
         self.LOG_COLORS = {}     # a dict, used to convert log level to color
         self.init_log_colors()
-        self.log_color_func = lambda:'%s' if os.name == 'nt' else \
-                                lambda color : ''.join([LinuxCmdColor.get_color_by_str(color),\
-                                    '%s', LinuxCmdColor.get_color_by_str('reset')])
         self.set_level_colors(**level_colors)
-
 
     def init_log_colors(self):
         ''' initialize log config '''
@@ -257,7 +255,8 @@ class CmdColoredFormatter(BasicFormatter):
                 raise KeyError("log level '%s' does not exist" % lev)
             if color not in color_set:
                 raise ValueError("log color '%s' does not exist" % color)
-            self.LOG_COLORS[lev] = self.log_color_func()
+            self.LOG_COLORS[lev] = '%s' if os.name == 'nt' else ''.join([LinuxCmdColor.get_color_by_str(color),\
+                                    '%s', LinuxCmdColor.get_color_by_str('reset')])
 
     def format(self, record):
         ''' @override BasicFormatter.format'''
