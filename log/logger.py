@@ -4,6 +4,7 @@
 # v0.2 date: 2018-7-19
 # v0.3 date: 2018-8-8
 # v0.4 date: 2018-8-14
+# v0.5 date: 2018-8-18
 # file: logger.py
 
 __all__ = ['get_logger', 'set_logger', 'debug', 'info', 'warning', 'error', 'critical']
@@ -110,12 +111,13 @@ class WindowsCmdColor(Color):
         __cmd_color_setter = ctypes.windll.kernel32.SetConsoleTextAttribute # set color by handle
 
     @classmethod
-    def windows_cmd_color_wrapper(cls, log_func, color):
-        def wrapper(*args, **kw):
-            cls.__cmd_color_setter(cls.__cmd_output_handle, cls.get_color_by_str(color))
-            res = log_func(*args, **kw)
-            cls.__cmd_color_setter(cls.__cmd_output_handle, cls.get_color_by_str('reset'))
-            return res
+    def windows_cmd_color_wrapper(cls, logger, level, color):
+        def wrapper(msg, *args, **kw):
+            if logger.isEnabledFor(level):
+                cls.__cmd_color_setter(cls.__cmd_output_handle, cls.get_color_by_str(color))
+                logger._log(level, msg, args, **kw)
+                cls.__cmd_color_setter(cls.__cmd_output_handle, cls.get_color_by_str('reset'))
+            return None
 
         return wrapper
 
@@ -340,10 +342,12 @@ class Logger():
         ''' Add common functions into current class'''
         func_names = ['debug', 'info', 'warning', 'error', 'critical', 'exception']
         for fn in func_names:
-            f = getattr(self.logger, fn)
             # Windows cmd color support
             if os.name == 'nt' and self.colorful and fn in self.cmd_color_dict:
-                f = WindowsCmdColor.windows_cmd_color_wrapper(f, self.cmd_color_dict[fn])
+                level = getattr(logging, fn.upper())
+                f = WindowsCmdColor.windows_cmd_color_wrapper(self.logger, level, self.cmd_color_dict[fn])
+            else:
+                f = getattr(self.logger, fn)
             setattr(self, fn, f)
 
     def __path_preprocess(self):
