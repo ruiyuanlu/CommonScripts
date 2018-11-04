@@ -1,0 +1,113 @@
+# coding=utf8
+
+import numpy as np
+from gensim.models import Word2Vec
+
+from keras.preprocessing.text import Tokenizer
+from keras.preprocessing.sequence import pad_sequences
+from keras.datasets import reuters
+
+(x_train, y_train), (x_test, y_test) = reuters.load_data()
+
+# 获取词汇到索引的映射表
+words2index = reuters.get_word_index()
+# 构建索引到词汇的反向映射
+index2words = {v: k for k, v in words2index.items()}
+
+# 将前10条新闻转换为文本
+texts = []
+for t in x_train[:10]:
+    texts.append([index2words.get(i-3, '<UNK>') for i in t])
+
+# 查看第1条文本
+print('\n第一条原始文本为：%s\n' % texts[0])
+
+# 从纯文本开始处理
+# 使用Keras提供的Tokenizer形符化英文词语
+# 对于中文则需要进行预先分词, keras无法进行中文分词
+tokenizer = Tokenizer()
+# 对二维列表进行训练, 每一个一维列表表示一个文本
+tokenizer.fit_on_texts(texts)
+
+# 查看所有形符, 返回形符到id的对应字典
+print(tokenizer.word_index)
+
+# 编码原始文本
+encoded_txts = tokenizer.texts_to_sequences(texts)
+
+# 查看编码后的第一条文本
+print('\n编码后的文本为：%s\n' % encoded_txts[0])
+
+# 对句子进行padding, 短的补齐, 长的截断, 确保句子长短一致
+max_length = 50
+padded_txts = pad_sequences(encoded_txts, maxlen=max_length, dtype='float32')
+
+# 查看补齐后的文本矩阵维度
+print('文本矩阵维度：', np.shape(padded_txts))
+
+# padding后的文本矩阵第一个文本
+print(padded_txts[0])
+
+print('开始训练word2vec模型')
+# 开始模型训练
+w2v_model = Word2Vec(sentences=texts, size=200, window=8, workers=8, min_count=5)
+print('训练完成')
+# 存储模型
+w2v_model.save('word2vec.model')
+# 以文本形式存储词嵌入向量, 不可追加训练
+w2v_model.wv.save_word2vec_format('embeddings.txt', binary=False)
+# 以二进制存储词嵌入向量, 可以加载后继续追加训练
+w2v_model.wv.save_word2vec_format('embeddings.bin', binary=True)
+
+
+def load_embedding_file(filepath, dtype='float64'):
+    '''
+    Load embedding info from given file
+    Return dict of word to embedding vector.
+    '''
+    words2embedding = {}
+    with open(filepath) as f:
+        cnt, dim = f.readline().strip().split()
+        for line in f:
+            c = line.strip().split() # 每一行的有效内容
+            words2embedding[c[0]] = np.asarray(c[1:], dtype=dtype)
+    return words2embedding, int(cnt), int(dim)
+
+
+def load_embedding_weight(filepath, vocab2id, unknown=0):
+    '''Load embedding weight matrix from text file
+
+    Args:
+        filepath: str word2vec file path.
+        vocab2id: dict dict of word to integer
+        unknown: int, float, ndarray the default numeric id for unknown words
+    '''
+    embedding_dict, cnt, dim = load_embedding_file(filepath)
+    # 初始化权重矩阵, +1 是为了保证padding的0的空间
+    weights = np.zeros((len(vocab2id) + 1, dim))
+    # 构建权重矩阵
+    for w, i in vocab2id.items():
+        weights[i] = embedding_dict.get(w, unknown)
+    # 返回构建好的词向量
+    return weights, dim
+
+# 传入embedding文件和word2inde的字典用于生成Embedding矩阵
+emb_weights, emb_dim = load_embedding_weight('embeddings.txt', tokenizer.word_index)
+# 输出词向量的权重
+print('词向量的维度为：', emb_weights.shape)
+
+from keras.layers import Embedding
+# 获得词汇表的词语数目, 由于使用了0作为padding
+# 因此需要在vocab_size中+1
+vocab_size = len(tokenizer.word_index) + 1
+# 使用Embedding层
+# input_dim为vocab_size, output_dim为词向量的维度
+# weights为权重矩阵的列表, input_length为每个句子的最大长度(padding 后)
+# 在初始训练中首先要将Embedding层冻结, 然后逐步微调Embedding层
+emb_layer = Embedding(input_dim=vocab_size,
+                      output_dim=emb_dim,
+                      weights=[emb_weights],
+                      input_length=max_length,
+                      trainable=False)
+
+print('Embedding权重加载完成')
