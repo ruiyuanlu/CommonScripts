@@ -9,6 +9,9 @@ https://blog.keras.io/a-ten-minute-introduction-to-sequence-to-sequence-learning
 以及对应的Github地址：https://github.com/keras-team/keras/blob/master/examples/lstm_seq2seq.py
 
 中英语料下载地址：http://www.manythings.org/anki/
+# 关于模型译码部分
+采用了最简单的贪心策略进行译码
+基于集束搜索的CTC方法可以参考博客的原理讲解：https://blog.csdn.net/JackyTintin/article/details/79425866
 
 # 执行流程说明
 
