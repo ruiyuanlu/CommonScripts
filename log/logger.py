@@ -5,10 +5,12 @@
 # v0.3 date: 2018-8-8
 # v0.4 date: 2018-8-14
 # v0.5 date: 2018-8-18
+# v0.6 date: 2019-1-26
 # file: logger.py
 
 __all__ = ['get_logger', 'set_logger', 'debug', 'info', 'warning', 'error', 'critical']
 
+import warnings
 import logging
 from logging import Formatter
 import threading
@@ -21,10 +23,14 @@ DEFAULT_FMT      = '[%(levelname)s] [%(asctime)s] %(filename)s [line:%(lineno)d]
 DEFAULT_DATE_FMT = '%Y-%m-%d %a, %p %H:%M:%S'
 DEFAULT_LEVEL    = 'DEBUG'
 
-def get_logger(loggername='', cmdlog=True, filelog=True, filename='./log/app.log', filemode='a', colorful=True,
+def get_logger(loggername='root', cmdlog=True, filelog=True, filename='./log/app.log', filemode='a', colorful=True,
                 cmd_color_dict=None, cmdlevel='DEBUG', cmdfmt=DEFAULT_FMT, cmddatefmt=DEFAULT_DATE_FMT,
                 filelevel='INFO', filefmt=DEFAULT_FMT, filedatefmt=DEFAULT_DATE_FMT,
                 propagate=False, backup_count=0, limit=10240, when=None):
+    if not loggername:
+        warnings.warn("'loggername' attribute must not be empty str.\n" + 
+                      "Changed to 'root' by default.")
+        loggername = 'root'
 
     return Logger.get_logger(**locals())
 
