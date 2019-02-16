@@ -1,3 +1,3 @@
-# Pytorch Utils
+# Pytorch Scripts
 
-Pytorch Utils for object detection.
+Pytorch related scripts.
