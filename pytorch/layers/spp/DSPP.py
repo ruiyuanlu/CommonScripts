@@ -3,11 +3,12 @@
 # Dilated Spatial Pyraid Pooling Layer Using Pytorch v1.0
 # Licensed under The MIT License
 # Written by Ruiyuan Lu
-# 2019-02-15
+# 2019-02-17
 # --------------------------------------------------------
 
-from math import ceil, floor
 import torch
+import numbers
+from math import ceil, floor
 from torch.nn import functional as F
 
 class DSPP2d(torch.nn.Module):
@@ -39,7 +40,7 @@ class DSPP2d(torch.nn.Module):
 
     def __init__(self, output_size=(4, 2, 1), dilation=1, pool='max'):
         super(DSPP2d, self).__init__()
-        self.level = 1 if isinstance(output_size, (int, float)) else len(output_size) # dspp level
+        self.level = 1 if isinstance(output_size, numbers.Real) else len(output_size) # dspp level
         self.output_size = self._to_tuple_2d(output_size, 'output_size', 1)
         self.dilation = self._to_tuple_2d(dilation, 'dilation', 1)
         self.pool = self._get_pool(pool)
@@ -60,7 +61,7 @@ class DSPP2d(torch.nn.Module):
 
     def _to_tuple_2d(self, param, param_name, min_val):
         """Check and transform params to tuple 2D format."""
-        if isinstance(param, (int, float)):
+        if isinstance(param, numbers.Real):
             if param < min_val:
                 raise ValueError(f"'{param_name}' >= {min_val} required.")
             else:
@@ -70,14 +71,14 @@ class DSPP2d(torch.nn.Module):
                 raise ValueError(f"SPP level: '{self.level}' != {param_name} level: '{len(param)}'")
             final_params = []
             for v in param:
-                if isinstance(v, (int, float)):
+                if isinstance(v, numbers.Real):
                     if v < min_val:
                         raise ValueError(f"'{param_name}' >= {min_val} required.")
                     else:
                         final_params.append((v, v))
                 elif (len(v) == 2 and
-                      isinstance(v[0], (int, float)) and
-                      isinstance(v[1], (int, float))):
+                      isinstance(v[0], numbers.Real) and
+                      isinstance(v[1], numbers.Real)):
                         if v[0] >= min_val and v[1] >= min_val:
                             final_params.append(tuple(v))
                         else:
