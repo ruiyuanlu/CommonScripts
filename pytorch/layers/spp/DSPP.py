@@ -3,7 +3,7 @@
 # Dilated Spatial Pyraid Pooling Layer Using Pytorch v1.0
 # Licensed under The MIT License
 # Written by Ruiyuan Lu
-# 2019-02-17
+# 2019-02-18
 # --------------------------------------------------------
 
 import torch
@@ -40,10 +40,10 @@ class DSPP2d(torch.nn.Module):
 
     def __init__(self, output_size=(4, 2, 1), dilation=1, pool='max'):
         super(DSPP2d, self).__init__()
-        self.level = 1 if isinstance(output_size, numbers.Real) else len(output_size) # dspp level
-        self.output_size = self._to_tuple_2d(output_size, 'output_size', 1)
-        self.dilation = self._to_tuple_2d(dilation, 'dilation', 1)
-        self.pool = self._get_pool(pool)
+        self._level = 1 if isinstance(output_size, numbers.Real) else len(output_size) # dspp level
+        self._output_size = self._to_tuple_2d(output_size, 'output_size', 1)
+        self._dilation = self._to_tuple_2d(dilation, 'dilation', 1)
+        self.pool = pool
 
     def forward(self, x):
         r"""Dilated SPP pooling"""
@@ -55,9 +55,35 @@ class DSPP2d(torch.nn.Module):
             pad_h = ceil(((s[0] - 1) * stride[0] + d[0] * (size[0] - 1) - H + 1) / 2)
             pad_w = ceil(((s[1] - 1) * stride[1] + d[1] * (size[1] - 1) - W + 1) / 2)
             padded = F.pad(x, (pad_w, pad_w, pad_h, pad_h)) # zero padding
-            dspp = self.pool(padded, size, stride, padding=0, dilation=d) # pooling
+            dspp = self._pool(padded, size, stride, padding=0, dilation=d) # pooling
             vecs.append(dspp.view(N, -1)) # flatten
         return torch.cat(vecs, dim=1) # aggregation
+
+    @property
+    def output_size(self):
+        return self._output_size
+
+    @property
+    def level(self):
+        return self._level
+
+    @property
+    def dilation(self):
+        return self._dilation
+
+    @property
+    def pool(self):
+        return 'max_2d' if self._pool == F.max_pool2d else 'avg_2d'
+
+    @pool.setter
+    def pool(self, method):
+        method = method.lower()
+        if method =='max':
+            self._pool = F.max_pool2d
+        elif method == 'avg':
+            self._pool = F.avg_pool2d
+        else:
+            raise ValueError(f"only support ('max'|'avg') pooling, '{method}' found.")
 
     def _to_tuple_2d(self, param, param_name, min_val):
         """Check and transform params to tuple 2D format."""
@@ -90,12 +116,6 @@ class DSPP2d(torch.nn.Module):
         else:
             raise TypeError(f"Invalid param: '{param_name}' = '{param}'. Numbers or iterable obj of numbers required.")
 
-    def _get_pool(self, method):
-        r"""Check Pool method"""
-        method = method.lower()
-        if method =='max':
-            return F.max_pool2d
-        elif method == 'avg':
-            return F.avg_pool2d
-        else:
-            raise ValueError(f"only support ('max'|'avg') pooling, '{method}' found.")
+    def __repr__(self):
+        return (self.__class__.__name__ + f"(level={self.level}, output_size=" +
+            f"{self.output_size}), dilation={self.dilation}, pool={self.pool}.")
