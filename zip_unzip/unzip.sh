@@ -8,13 +8,15 @@ unzip()
 {
 	if [ $# -eq 1 ] # $# 表示函数接收到的变量个数
 	then
-		tar -xvf $1
+		tar -xvf $1 # 解压 .tar.gz 文件
+		tar -cvf $1 # 解压 .tar 文件
 	else
 		if [ ! -x $2 ] # 判断当前目录是否存在并且具有可执行权限
 		then
 			mkdir $2
 		fi
-		tar -xvf $1 -C $2
+		tar -xvf $1 -C $2 # -v 是输出 verbose -xf 用于解压 .tar.gz 文件
+		tar -cvf $1 -C $2 # -c 用于解压 .tar 文件
 	fi
 }
 
